@@ -245,6 +245,38 @@
       line-height: 1.15;
     }
 
+    .parking-notice {
+      margin-top: 7px;
+      padding: 7px 8px;
+      border: 1px solid #a7d7b5;
+      border-radius: 10px;
+      background: #eaf8ef;
+      color: #155d2d;
+      font-size: 0.84rem;
+      line-height: 1.22;
+    }
+
+    .parking-notice strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.94rem;
+    }
+
+    .parking-notice small {
+      display: block;
+      margin-top: 3px;
+      font-size: 0.76rem;
+      line-height: 1.2;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .parking-notice {
+        border-color: #34724a;
+        background: #173c25;
+        color: #c9f4d5;
+      }
+    }
+
     .preview {
       margin-top: 7px;
       overflow: hidden;
@@ -512,6 +544,12 @@
           </div>
         </div>
 
+        <div class="parking-notice hidden" id="freeParkingNotice" role="status" aria-live="polite">
+          <strong id="freeParkingTitle">Default free-parking period</strong>
+          <span id="freeParkingText"></span>
+          <small>Default schedule only. Holidays, Ramadan, events, special zones and temporary changes are not checked in real time. Always confirm the parking sign.</small>
+        </div>
+
         <div class="preview">
           <div class="preview-head">
             SMS preview
@@ -526,6 +564,14 @@
               <span>Message</span>
               <strong id="previewBody">Select a parking emirate.</strong>
             </div>
+            <div class="preview-row">
+              <span>Cost</span>
+              <strong id="previewCost">—</strong>
+            </div>
+            <div class="preview-row">
+              <span>Paid hours</span>
+              <strong id="previewHours">—</strong>
+            </div>
           </div>
         </div>
 
@@ -536,7 +582,8 @@
 
         <div class="status" id="statusMessage" aria-live="polite"></div>
         <div class="info-line">
-          Verify the shortcode and zone against the parking sign before sending.
+          Information is not updated in real time and may change by location, holiday, Ramadan, event or authority announcement. Verify the sign before sending.<br>
+          <strong>Page rules last reviewed: 16 July 2026.</strong>
         </div>
       </form>
     </section>
@@ -623,7 +670,12 @@
       const rememberPlate = $("rememberPlate");
       const previewShortcode = $("previewShortcode");
       const previewBody = $("previewBody");
+      const previewCost = $("previewCost");
+      const previewHours = $("previewHours");
       const previewStatus = $("previewStatus");
+      const freeParkingNotice = $("freeParkingNotice");
+      const freeParkingTitle = $("freeParkingTitle");
+      const freeParkingText = $("freeParkingText");
       const statusMessage = $("statusMessage");
 
       function setStatus(message = "", type = "") {
@@ -729,8 +781,11 @@
                 ${tapChoices("durationChoices", [["1","1"],["2","2"],["3","3"],["4","4"]], 4)}
               </div>
             </div>
+            <div class="section-label" style="margin-top:7px;">Tariff type <span>Check the sign</span></div>
+            ${tapChoices("dubaiTariffChoices", [["standard","Standard"],["premium","Premium"]], 2)}
           `;
           wireTapChoices("durationChoices", "1");
+          wireTapChoices("dubaiTariffChoices", "standard");
         }
 
         if (state.system === "parkonic") {
@@ -782,9 +837,12 @@
         if (state.system === "sharjah_city" || state.system === "khorfakkan") {
           systemHint.textContent = "5566";
           systemFields.innerHTML = `
-            <div class="section-label" style="margin-top:0;">Hours <span>Tap one</span></div>
+            <div class="section-label" style="margin-top:0;">Parking sign <span>Blue signs charge every day</span></div>
+            ${tapChoices("sharjahSignChoices", [["regular","Regular"],["blue","Blue 7-day"]], 2)}
+            <div class="section-label" style="margin-top:7px;">Hours <span>Tap one</span></div>
             ${tapChoices("durationChoices", [["1","1"],["2","2"],["3","3"],["5","5"]], 4)}
           `;
+          wireTapChoices("sharjahSignChoices", "regular");
           wireTapChoices("durationChoices", "1");
         }
 
@@ -811,6 +869,174 @@
       function updatePlateCodeVisibility() {
         const hidden = state.system === "sharjah_city" || state.system === "khorfakkan";
         plateCodeField.classList.toggle("hidden", hidden);
+      }
+
+      function getUaeTime() {
+        const formatter = new Intl.DateTimeFormat("en-GB", {
+          timeZone: "Asia/Dubai",
+          weekday: "long",
+          hour: "2-digit",
+          minute: "2-digit",
+          hourCycle: "h23"
+        });
+
+        const parts = Object.fromEntries(
+          formatter.formatToParts(new Date())
+            .filter((part) => part.type !== "literal")
+            .map((part) => [part.type, part.value])
+        );
+
+        return {
+          weekday: parts.weekday,
+          hour: Number(parts.hour),
+          minute: Number(parts.minute),
+          totalMinutes: (Number(parts.hour) * 60) + Number(parts.minute)
+        };
+      }
+
+      function isWithinTime(totalMinutes, startMinutes, endMinutes) {
+        if (startMinutes < endMinutes) {
+          return totalMinutes >= startMinutes && totalMinutes < endMinutes;
+        }
+
+        return totalMinutes >= startMinutes || totalMinutes < endMinutes;
+      }
+
+      function getParkingSchedule() {
+        const time = getUaeTime();
+        const system = state.system;
+        const duration = Number(activeValue("durationChoices", "1"));
+        const isSunday = time.weekday === "Sunday";
+        const isFriday = time.weekday === "Friday";
+        const isDubaiPeak =
+          isWithinTime(time.totalMinutes, 8 * 60, 10 * 60) ||
+          isWithinTime(time.totalMinutes, 16 * 60, 20 * 60);
+
+        if (system === "dubai_rta") {
+          const tariffType = activeValue("dubaiTariffChoices", "standard");
+          const isFree = isSunday || isWithinTime(time.totalMinutes, 22 * 60, 8 * 60);
+          let cost;
+
+          if (isFree) {
+            cost = "AED 0 during the default free period";
+          } else if (isDubaiPeak) {
+            const hourlyRate = tariffType === "premium" ? 6 : 4;
+            cost = `About AED ${hourlyRate * duration} (${hourlyRate}/hour ${tariffType} peak rate)`;
+          } else {
+            cost = "Off-peak cost varies by zone; check the tariff sign";
+          }
+
+          return {
+            isFree,
+            title: "Dubai public parking appears free now",
+            reason: isSunday
+              ? "The default Parkin schedule treats Sunday as free all day."
+              : "The default Parkin schedule is free overnight from 10:00 PM to 8:00 AM.",
+            paidHours: "Mon–Sat, 8:00 AM–10:00 PM",
+            cost
+          };
+        }
+
+        if (system === "parkonic") {
+          return {
+            isFree: false,
+            title: "",
+            reason: "",
+            paidHours: "Varies by private Parkonic location",
+            cost: "Varies by zone, location and displayed tariff"
+          };
+        }
+
+        if (system === "mawaqif") {
+          const parkingType = activeValue("parkingTypeChoices", "S");
+          const isFree = isSunday || time.totalMinutes < 8 * 60;
+          const hourlyRate = parkingType === "P" ? 3 : 2;
+          const estimated = parkingType === "S"
+            ? Math.min(hourlyRate * duration, 15)
+            : hourlyRate * duration;
+
+          return {
+            isFree,
+            title: "Abu Dhabi Mawaqif appears free now",
+            reason: isSunday
+              ? "The default Mawaqif schedule treats Sunday as free all day."
+              : "The default Mawaqif schedule is free from midnight to 8:00 AM.",
+            paidHours: "Mon–Sat, 8:00 AM–12:00 midnight",
+            cost: isFree
+              ? "AED 0 during the default free period"
+              : parkingType === "P"
+                ? `About AED ${estimated} (AED 3/hour, maximum stay 4 hours)`
+                : `About AED ${estimated} (AED 2/hour; AED 15 daily cap)`
+          };
+        }
+
+        if (system === "sharjah_city" || system === "khorfakkan") {
+          const signType = activeValue("sharjahSignChoices", "regular");
+          const overnightFree = time.totalMinutes < 8 * 60;
+          const regularFridayFree = signType === "regular" && isFriday;
+          const isFree = overnightFree || regularFridayFree;
+
+          return {
+            isFree,
+            title: system === "khorfakkan"
+              ? "Khorfakkan parking appears free now"
+              : "Sharjah public parking appears free now",
+            reason: regularFridayFree
+              ? "The default regular-sign schedule treats Friday as free. Blue 7-day signs remain chargeable."
+              : "The current default paid-parking schedule starts at 8:00 AM.",
+            paidHours: signType === "blue"
+              ? "Every day, 8:00 AM–12:00 midnight"
+              : "Sat–Thu, 8:00 AM–12:00 midnight",
+            cost: isFree
+              ? "AED 0 during the default free period"
+              : `About AED ${(2.38 * duration).toFixed(2)} by SMS; confirm the current fee`
+          };
+        }
+
+        if (system === "ajman_public") {
+          const middayFree = isWithinTime(time.totalMinutes, 13 * 60, 17 * 60);
+          const overnightFree = isWithinTime(time.totalMinutes, 22 * 60, 8 * 60);
+          const isFree = isFriday || middayFree || overnightFree;
+
+          return {
+            isFree,
+            title: "Ajman public parking may be free now",
+            reason: isFriday
+              ? "The commonly published default schedule treats Friday as free."
+              : middayFree
+                ? "The commonly published default schedule has a free break from 1:00 PM to 5:00 PM."
+                : "The commonly published default schedule is free overnight from 10:00 PM to 8:00 AM.",
+            paidHours: "Sat–Thu, 8:00 AM–1:00 PM and 5:00 PM–10:00 PM",
+            cost: isFree
+              ? "AED 0 during the default free period"
+              : "AED 2.38 for the one-hour SMS reservation"
+          };
+        }
+
+        return {
+          isFree: false,
+          title: "",
+          reason: "",
+          paidHours: "—",
+          cost: "—"
+        };
+      }
+
+      function updateParkingNotice() {
+        const schedule = getParkingSchedule();
+
+        previewCost.textContent = schedule.cost;
+        previewHours.textContent = schedule.paidHours;
+
+        if (schedule.isFree) {
+          freeParkingTitle.textContent = schedule.title;
+          freeParkingText.textContent = schedule.reason;
+          freeParkingNotice.classList.remove("hidden");
+        } else {
+          freeParkingNotice.classList.add("hidden");
+          freeParkingTitle.textContent = "";
+          freeParkingText.textContent = "";
+        }
       }
 
       function getMessageData() {
@@ -879,6 +1105,10 @@
           const parkingType = activeValue("parkingTypeChoices", "S");
           const duration = activeValue("durationChoices", "1");
 
+          if (parkingType === "P" && Number(duration) > 4) {
+            return invalid("Premium Mawaqif has a maximum stay of 4 hours.");
+          }
+
           return {
             valid: true,
             shortcode: "3009",
@@ -921,6 +1151,7 @@
         previewBody.textContent = result.valid ? result.body : result.message;
         previewStatus.textContent = result.valid ? "Ready" : "Incomplete";
         previewStatus.style.color = result.valid ? "var(--success)" : "var(--muted)";
+        updateParkingNotice();
       }
 
       function saveVehicle() {
@@ -1047,6 +1278,7 @@
 
       loadVehicle();
       updatePreview();
+      window.setInterval(updateParkingNotice, 60000);
     })();
   </script>
 </body>
