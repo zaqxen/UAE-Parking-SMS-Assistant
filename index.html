@@ -40,7 +40,14 @@
     }
 
     html {
+      color-scheme: light;
       background: var(--bg);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      html {
+        color-scheme: dark;
+      }
     }
 
     body {
@@ -487,12 +494,12 @@
           <div class="fields">
             <div class="field col-5" id="plateCodeField">
               <label for="plateCode">Plate code</label>
-              <input id="plateCode" type="text" maxlength="6" autocomplete="off" placeholder="EE">
+              <input id="plateCode" type="text" maxlength="6" autocomplete="off" placeholder="AA">
             </div>
 
             <div class="field col-7">
               <label for="plateNumber">Plate number</label>
-              <input id="plateNumber" type="text" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="58378">
+              <input id="plateNumber" type="text" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="12345">
             </div>
           </div>
 
