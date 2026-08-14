@@ -1,37 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0d6efd">
+  <meta name="theme-color" content="#f4f7fb">
   <title>UAE Parking SMS</title>
+
+  <script>
+    (() => {
+      const THEME_KEY = "uaeParkingSms.theme.v1";
+
+      function uaeHour() {
+        const parts = new Intl.DateTimeFormat("en-GB", {
+          timeZone: "Asia/Dubai",
+          hour: "2-digit",
+          hourCycle: "h23"
+        }).formatToParts(new Date());
+
+        return Number(parts.find((part) => part.type === "hour")?.value || 12);
+      }
+
+      function autoTheme() {
+        if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          return "dark";
+        }
+
+        const hour = uaeHour();
+        return hour >= 7 && hour < 19 ? "light" : "dark";
+      }
+
+      const preference = localStorage.getItem(THEME_KEY) || "auto";
+      document.documentElement.dataset.theme = preference === "light" ? "light" : autoTheme();
+    })();
+  </script>
+
   <style>
-    :root {
-      --primary: #0d6efd;
-      --primary-dark: #0a58ca;
-      --success: #198754;
-      --danger: #c62828;
-      --bg: #f4f7fb;
+:root {
+      color-scheme: light;
+      --primary: #2f5d7c;
+      --primary-strong: #244a63;
+      --primary-on: #ffffff;
+
+      --selected-bg: #e7f0f8;
+      --selected-border: #7ea2bd;
+      --selected-text: #17324d;
+
+      --success: #176a3a;
+      --danger: #a93232;
+      --bg: #f6f8fa;
       --card: #ffffff;
-      --text: #17202a;
-      --muted: #4f5b67;
-      --border: #cfd8e3;
-      --soft: #e8f1ff;
+      --card-soft: #f0f4f7;
+      --text: #18232d;
+      --muted: #4f5d68;
+      --border: #ccd5dd;
       --input: #ffffff;
-      --shadow: 0 6px 18px rgba(31, 41, 55, 0.10);
+      --shadow: 0 6px 18px rgba(31, 41, 55, 0.08);
+
+      --free-bg: #edf7f0;
+      --free-border: #a5cfb1;
+      --free-text: #175a30;
     }
 
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0f1720;
-        --card: #18212b;
-        --text: #f8fafc;
-        --muted: #c3cbd5;
-        --border: #465463;
-        --soft: #17345e;
-        --input: #111922;
-        --shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-      }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --primary: #8ebbd5;
+      --primary-strong: #a8cce0;
+      --primary-on: #102432;
+
+      --selected-bg: #263b49;
+      --selected-border: #6e96ad;
+      --selected-text: #f4f8fb;
+
+      --success: #8edbaa;
+      --danger: #ff9a9a;
+      --bg: #11171d;
+      --card: #192129;
+      --card-soft: #222d36;
+      --text: #f5f7f9;
+      --muted: #c3cbd2;
+      --border: #46525d;
+      --input: #141c23;
+      --shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+
+      --free-bg: #183625;
+      --free-border: #447555;
+      --free-text: #d3f1db;
     }
 
     * {
@@ -39,27 +92,27 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    html {
-      color-scheme: light;
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
       background: var(--bg);
     }
 
-    @media (prefers-color-scheme: dark) {
-      html {
-        color-scheme: dark;
-      }
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
 
     body {
-      margin: 0;
       min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      font-size: 16px;
-      line-height: 1.3;
-      background:
-        radial-gradient(circle at top left, rgba(13, 110, 253, 0.12), transparent 38%),
-        var(--bg);
+      min-height: 100dvh;
       color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 1.5;
+      background: var(--bg);
     }
 
     button,
@@ -71,67 +124,159 @@
       touch-action: manipulation;
     }
 
+    strong {
+      font-weight: 600;
+    }
+
     .app {
-      width: min(100%, 430px);
+      width: min(100%, 560px);
       margin: 0 auto;
-      padding:
-        max(5px, env(safe-area-inset-top))
-        5px
-        max(8px, env(safe-area-inset-bottom));
+      padding: 10px;
     }
 
-    .header {
-      padding: 0 2px 5px;
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 7px;
     }
 
-    .header h1 {
+    .brand {
+      min-width: 0;
+    }
+
+    .brand h1 {
       margin: 0;
-      font-size: 1.5rem;
-      line-height: 1.08;
+      font-size: 1.3rem;
+      line-height: 1.1;
+      font-weight: 700;
     }
 
-    .header p {
+    .brand p {
       margin: 2px 0 0;
       color: var(--muted);
-      font-size: 0.9rem;
-      line-height: 1.2;
+      font-size: 0.82rem;
+      line-height: 1.3;
+      font-weight: 400;
     }
 
-    .card {
-      padding: 7px;
+    .theme-control {
+      display: flex;
+      flex: 0 0 auto;
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+    }
+
+    .theme-btn {
+      min-height: 38px;
+      padding: 6px 9px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.15;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .theme-btn.active {
+      border-color: var(--selected-border);
+      background: var(--selected-bg);
+      color: var(--selected-text);
+    }
+
+    .wizard {
+      min-height: 0;
+    }
+
+    .step {
+      display: none;
+      overflow: hidden;
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 13px;
+      border-radius: 15px;
       box-shadow: var(--shadow);
     }
 
+    .step.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .step-head {
+      padding: 11px 12px 9px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .step-kicker {
+      color: var(--primary);
+      font-size: 0.78rem;
+      line-height: 1.2;
+      font-weight: 600;
+      letter-spacing: 0.025em;
+    }
+
+    .step-title {
+      margin: 3px 0 0;
+      font-size: 1.48rem;
+      line-height: 1.16;
+      font-weight: 700;
+    }
+
+    .step-subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.4;
+      font-weight: 400;
+    }
+
+    .step-body {
+      padding: 10px 11px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .step-footer {
+      margin-top: auto;
+      padding: 9px 11px 10px;
+      border-top: 1px solid var(--border);
+      background: var(--card);
+    }
+
     .section + .section {
-      margin-top: 7px;
-      padding-top: 7px;
+      margin-top: 10px;
+      padding-top: 10px;
       border-top: 1px solid var(--border);
     }
 
     .section-label {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       justify-content: space-between;
-      gap: 5px;
-      margin-bottom: 4px;
-      font-size: 0.98rem;
-      line-height: 1.15;
-      font-weight: 850;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 1rem;
+      line-height: 1.25;
+      font-weight: 600;
     }
 
     .section-label span {
       color: var(--muted);
       font-size: 0.8rem;
-      font-weight: 700;
+      line-height: 1.3;
+      font-weight: 400;
       text-align: right;
     }
 
     .tap-grid {
       display: grid;
-      gap: 4px;
+      gap: 6px;
     }
 
     .tap-grid.cols-2 {
@@ -147,1107 +292,1257 @@
     }
 
     .tap-btn {
-      min-height: 44px;
-      padding: 5px 4px;
+      min-height: 56px;
+      padding: 8px 6px;
       border: 1px solid var(--border);
-      border-radius: 9px;
+      border-radius: 11px;
       background: var(--input);
       color: var(--text);
-      font-size: 0.95rem;
-      line-height: 1.08;
-      font-weight: 850;
+      font-size: 1rem;
+      line-height: 1.18;
+      font-weight: 600;
       cursor: pointer;
     }
 
     .tap-btn small {
       display: block;
-      margin-top: 1px;
+      margin-top: 3px;
       color: var(--muted);
-      font-size: 0.73rem;
-      line-height: 1.08;
-      font-weight: 700;
+      font-size: 0.76rem;
+      line-height: 1.22;
+      font-weight: 400;
     }
 
     .tap-btn.active {
-      color: #ffffff;
-      background: var(--primary);
-      border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
+      border-color: var(--selected-border);
+      background: var(--selected-bg);
+      color: var(--selected-text);
+      box-shadow: 0 0 0 2px rgba(47, 93, 124, 0.10);
     }
 
     .tap-btn.active small {
-      color: rgba(255, 255, 255, 0.88);
+      color: var(--selected-text);
+      opacity: 0.82;
     }
 
     .fields {
       display: grid;
       grid-template-columns: repeat(12, minmax(0, 1fr));
-      gap: 5px;
+      gap: 7px;
     }
 
     .field {
       grid-column: span 12;
     }
 
-    .field.col-4 {
-      grid-column: span 4;
-    }
-
     .field.col-5 {
       grid-column: span 5;
-    }
-
-    .field.col-6 {
-      grid-column: span 6;
     }
 
     .field.col-7 {
       grid-column: span 7;
     }
 
-    .field.col-8 {
-      grid-column: span 8;
-    }
-
     label {
       display: block;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
       color: var(--muted);
-      font-size: 0.86rem;
-      line-height: 1.1;
-      font-weight: 800;
+      font-size: 0.88rem;
+      line-height: 1.3;
+      font-weight: 600;
     }
 
     input[type="text"] {
       width: 100%;
-      min-height: 46px;
-      padding: 6px 8px;
+      min-height: 54px;
+      padding: 8px 10px;
       border: 1px solid var(--border);
-      border-radius: 9px;
+      border-radius: 10px;
       outline: none;
       background: var(--input);
       color: var(--text);
-      font-size: 1.08rem;
-      line-height: 1.1;
-      font-weight: 750;
+      font-size: 1.16rem;
+      line-height: 1.25;
+      font-weight: 500;
       text-transform: uppercase;
     }
 
     input[type="text"]:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
+      box-shadow: 0 0 0 3px rgba(47, 93, 124, 0.15);
     }
 
-    .hint {
-      margin-top: 2px;
-      color: var(--muted);
-      font-size: 0.78rem;
-      line-height: 1.15;
-    }
-
-    .parking-notice {
-      margin-top: 7px;
-      padding: 7px 8px;
-      border: 1px solid #a7d7b5;
-      border-radius: 10px;
-      background: #eaf8ef;
-      color: #155d2d;
-      font-size: 0.84rem;
-      line-height: 1.22;
-    }
-
-    .parking-notice strong {
-      display: block;
-      margin-bottom: 2px;
-      font-size: 0.94rem;
-    }
-
-    .parking-notice small {
-      display: block;
-      margin-top: 3px;
-      font-size: 0.76rem;
-      line-height: 1.2;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .parking-notice {
-        border-color: #34724a;
-        background: #173c25;
-        color: #c9f4d5;
-      }
-    }
-
-    .preview {
-      margin-top: 7px;
-      overflow: hidden;
+    .summary-card {
+      padding: 9px 10px;
       border: 1px solid var(--border);
       border-radius: 11px;
-      background: rgba(108, 117, 125, 0.05);
+      background: var(--card-soft);
     }
 
-    .preview-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 5px;
-      padding: 5px 7px;
-      background: var(--soft);
-      font-size: 0.84rem;
-      line-height: 1.1;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .preview-body {
-      padding: 6px 7px;
-    }
-
-    .preview-row {
-      display: grid;
-      grid-template-columns: 82px 1fr;
-      gap: 5px;
-      align-items: start;
-      font-size: 0.94rem;
-      line-height: 1.2;
-    }
-
-    .preview-row + .preview-row {
-      margin-top: 4px;
-    }
-
-    .preview-row span {
-      color: var(--muted);
-      font-weight: 750;
-    }
-
-    .preview-row strong {
-      overflow-wrap: anywhere;
-      font-size: 1.08rem;
-      line-height: 1.2;
-      letter-spacing: 0.01em;
-    }
-
-    .actions {
-      display: grid;
-      grid-template-columns: 1fr 82px;
-      gap: 5px;
-      margin-top: 7px;
-    }
-
-    .primary-btn,
-    .secondary-btn {
-      min-height: 48px;
-      border: 0;
-      border-radius: 9px;
+    .summary-title {
+      margin: 0 0 5px;
       font-size: 1rem;
-      font-weight: 900;
-      cursor: pointer;
+      line-height: 1.3;
+      font-weight: 600;
     }
 
-    .primary-btn {
-      background: var(--primary);
-      color: #ffffff;
+    .summary-line {
+      display: grid;
+      grid-template-columns: 86px 1fr;
+      gap: 8px;
+      padding: 2px 0;
+      font-size: 0.9rem;
+      line-height: 1.4;
     }
 
-    .primary-btn:active {
-      background: var(--primary-dark);
+    .summary-line span {
+      color: var(--muted);
+      font-weight: 400;
     }
 
-    .secondary-btn {
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text);
+    .summary-line strong {
+      overflow-wrap: anywhere;
+      font-weight: 600;
+    }
+
+    .saved-plate-box {
+      margin-bottom: 8px;
+      padding: 8px 9px;
+      border: 1px solid var(--selected-border);
+      border-radius: 10px;
+      background: var(--selected-bg);
+      color: var(--selected-text);
+    }
+
+    .saved-plate-box span {
+      display: block;
+      font-size: 0.8rem;
+      line-height: 1.25;
+      font-weight: 400;
+      opacity: 0.82;
+    }
+
+    .saved-plate-box strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1rem;
+      line-height: 1.3;
+      font-weight: 600;
     }
 
     .mini-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 7px;
-      margin-top: 5px;
+      gap: 8px;
+      margin-top: 7px;
     }
 
     .remember {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       margin: 0;
       color: var(--muted);
-      font-size: 0.84rem;
-      line-height: 1.1;
-      font-weight: 750;
+      font-size: 0.88rem;
+      line-height: 1.3;
+      font-weight: 500;
     }
 
     .remember input {
-      width: 18px;
-      height: 18px;
-      min-height: auto;
+      width: 21px;
+      height: 21px;
       margin: 0;
-      padding: 0;
       accent-color: var(--primary);
     }
 
     .link-btn {
-      min-height: 30px;
-      padding: 2px 0;
+      min-height: 36px;
+      padding: 4px 2px;
       border: 0;
       background: transparent;
       color: var(--danger);
-      font-size: 0.8rem;
-      font-weight: 850;
+      font-size: 0.84rem;
+      line-height: 1.25;
+      font-weight: 600;
       cursor: pointer;
     }
 
-    .status {
-      min-height: 17px;
+    .primary-btn,
+    .secondary-btn {
+      width: 100%;
+      min-height: 56px;
+      border-radius: 11px;
+      font-size: 1rem;
+      line-height: 1.2;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .primary-btn {
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      color: var(--primary-on);
+    }
+
+    .primary-btn:active {
+      background: var(--primary-strong);
+    }
+
+    .secondary-btn {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .step1-actions {
+      display: grid;
+      gap: 7px;
+    }
+
+    .step1-actions.has-saved {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .footer-actions {
+      display: grid;
+      grid-template-columns: 94px 1fr;
+      gap: 7px;
+    }
+
+    .parking-notice {
+      margin-top: 8px;
+      padding: 8px 9px;
+      border: 1px solid var(--free-border);
+      border-radius: 11px;
+      background: var(--free-bg);
+      color: var(--free-text);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .parking-notice strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 1rem;
+      line-height: 1.3;
+      font-weight: 600;
+    }
+
+    .parking-notice small {
+      display: block;
       margin-top: 4px;
-      font-size: 0.84rem;
-      line-height: 1.15;
-      font-weight: 850;
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    .sms-card {
+      margin-top: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .sms-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 7px 9px;
+      background: var(--card-soft);
+      font-size: 0.82rem;
+      line-height: 1.3;
+      font-weight: 600;
+    }
+
+    .sms-body {
+      padding: 9px;
+    }
+
+    .sms-row {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 8px;
+      align-items: start;
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .sms-row + .sms-row {
+      margin-top: 7px;
+    }
+
+    .sms-row span {
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .sms-row strong {
+      overflow-wrap: anywhere;
+      font-size: 1.02rem;
+      line-height: 1.35;
+      font-weight: 600;
+    }
+
+    .sms-message {
+      display: block;
+      margin-top: 5px;
+      padding: 10px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      background: var(--input);
+      font-size: 1.16rem !important;
+      line-height: 1.4 !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.01em;
+      overflow-wrap: anywhere;
+    }
+
+    .status {
+      min-height: 18px;
+      margin-top: 6px;
+      color: var(--danger);
+      font-size: 0.86rem;
+      line-height: 1.35;
+      font-weight: 500;
     }
 
     .status.success {
       color: var(--success);
     }
 
-    .status.error {
-      color: var(--danger);
-    }
-
-    .info-line {
-      margin-top: 4px;
+    .page-note {
+      margin-top: 8px;
       color: var(--muted);
-      font-size: 0.78rem;
-      line-height: 1.18;
+      font-size: 0.8rem;
+      line-height: 1.45;
     }
 
     .hidden {
       display: none !important;
     }
 
-    @media (max-width: 380px) {
+    @media (max-width: 640px) {
+      body {
+        overflow: hidden;
+      }
+
+      .app {
+        height: 100vh;
+        height: 100dvh;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        padding:
+          max(6px, env(safe-area-inset-top))
+          6px
+          max(6px, env(safe-area-inset-bottom));
+      }
+
+      .topbar {
+        margin-bottom: 5px;
+      }
+
+      .brand h1 {
+        font-size: 1.15rem;
+      }
+
+      .brand p {
+        display: none;
+      }
+
+      .wizard,
+      .step {
+        min-height: 0;
+        height: 100%;
+      }
+
+      .step {
+        border-radius: 12px;
+      }
+
+      .step-head {
+        padding: 9px 10px 7px;
+      }
+
+      .step-title {
+        font-size: 1.42rem;
+      }
+
+      .step-body {
+        min-height: 0;
+        flex: 1 1 auto;
+        padding: 9px 10px;
+      }
+
+      .step-footer {
+        flex: 0 0 auto;
+        padding: 8px 10px;
+      }
+
       .tap-grid.cols-4 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .tap-btn {
-        min-height: 42px;
+        min-height: 56px;
       }
 
-      .preview-row {
-        grid-template-columns: 78px 1fr;
+      .step1-actions.has-saved {
+        grid-template-columns: 1fr;
       }
     }
 
-    @media (max-width: 330px) {
+    @media (max-width: 350px) {
+      body {
+        font-size: 17px;
+      }
+
       .app {
         padding-left: 4px;
         padding-right: 4px;
       }
 
-      .card {
-        padding: 6px;
+      .step-head,
+      .step-body,
+      .step-footer {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+
+      .step-title {
+        font-size: 1.34rem;
       }
 
       .tap-btn {
-        font-size: 0.92rem;
+        font-size: 0.98rem;
       }
 
-      .field.col-4,
+      .summary-line,
+      .sms-row {
+        grid-template-columns: 78px 1fr;
+      }
+
       .field.col-5,
-      .field.col-6,
-      .field.col-7,
-      .field.col-8 {
+      .field.col-7 {
         grid-column: span 12;
       }
 
-      .actions {
-        grid-template-columns: 1fr;
+      .footer-actions {
+        grid-template-columns: 84px 1fr;
       }
     }
   </style>
 </head>
+
 <body>
   <main class="app">
-    <header class="header">
-      <h1>UAE Parking SMS</h1>
-      <p>Tap the parking location, enter your plate, then open the SMS app.</p>
+    <header class="topbar">
+      <div class="brand">
+        <h1>UAE Parking SMS</h1>
+        <p>Simple parking SMS helper</p>
+      </div>
+
+      <div class="theme-control" aria-label="Appearance">
+        <button type="button" class="theme-btn" id="themeAuto" data-theme-pref="auto">Auto</button>
+        <button type="button" class="theme-btn" id="themeLight" data-theme-pref="light">Light</button>
+      </div>
     </header>
 
-    <section class="card">
-      <form id="parkingForm" novalidate>
-        <div class="section">
-          <div class="section-label">
-            Parking emirate
-            <span>Tap one</span>
-          </div>
-          <div class="tap-grid cols-4" id="parkingEmirates">
-            <button type="button" class="tap-btn" data-value="dubai">Dubai</button>
-            <button type="button" class="tap-btn" data-value="abu_dhabi">Abu Dhabi</button>
-            <button type="button" class="tap-btn" data-value="sharjah">Sharjah</button>
-            <button type="button" class="tap-btn" data-value="ajman">Ajman</button>
-          </div>
+    <div class="wizard">
+      <section class="step active" id="step1" data-step="1">
+        <div class="step-head">
+          <div class="step-kicker">Step 1 of 3</div>
+          <h2 class="step-title">Where are you parking?</h2>
+          <p class="step-subtitle">Tap the emirate and parking details. You choose when to continue.</p>
         </div>
 
-        <div class="section hidden" id="parkingOptionSection">
-          <div class="section-label">
-            Parking system
-            <span>Available options</span>
-          </div>
-          <div class="tap-grid cols-2" id="parkingOptions"></div>
-        </div>
-
-        <div class="section hidden" id="systemFieldsSection">
-          <div class="section-label">
-            Parking details
-            <span id="systemHint"></span>
-          </div>
-          <div id="systemFields"></div>
-        </div>
-
-        <div class="section">
-          <div class="section-label">
-            Plate emirate
-            <span>Vehicle registration</span>
-          </div>
-          <div class="tap-grid cols-4" id="plateEmirates">
-            <button type="button" class="tap-btn active" data-value="DXB">DXB<small>Dubai</small></button>
-            <button type="button" class="tap-btn" data-value="AUH">AUH<small>Abu Dhabi</small></button>
-            <button type="button" class="tap-btn" data-value="SHJ">SHJ<small>Sharjah</small></button>
-            <button type="button" class="tap-btn" data-value="AJM">AJM<small>Ajman</small></button>
-            <button type="button" class="tap-btn" data-value="UAQ">UAQ<small>Umm Al Quwain</small></button>
-            <button type="button" class="tap-btn" data-value="RAK">RAK<small>Ras Al Khaimah</small></button>
-            <button type="button" class="tap-btn" data-value="FUJ">FUJ<small>Fujairah</small></button>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="fields">
-            <div class="field col-5" id="plateCodeField">
-              <label for="plateCode">Plate code</label>
-              <input id="plateCode" type="text" maxlength="6" autocomplete="off" placeholder="AA">
-            </div>
-
-            <div class="field col-7">
-              <label for="plateNumber">Plate number</label>
-              <input id="plateNumber" type="text" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="12345">
+        <div class="step-body">
+          <div class="section">
+            <div class="section-label">Parking emirate <span>Tap one</span></div>
+            <div class="tap-grid cols-4" id="parkingEmirates">
+              <button type="button" class="tap-btn" data-value="dubai">Dubai</button>
+              <button type="button" class="tap-btn" data-value="abu_dhabi">Abu Dhabi</button>
+              <button type="button" class="tap-btn" data-value="sharjah">Sharjah</button>
+              <button type="button" class="tap-btn" data-value="ajman">Ajman</button>
             </div>
           </div>
 
-          <div class="mini-row">
-            <label class="remember">
-              <input id="rememberPlate" type="checkbox" checked>
-              Remember plate
-            </label>
-            <button type="button" class="link-btn" id="clearSaved">Clear saved</button>
+          <div class="section hidden" id="parkingSystemSection">
+            <div class="section-label">Parking system <span>Tap one</span></div>
+            <div class="tap-grid cols-2" id="parkingSystems"></div>
+          </div>
+
+          <div class="section hidden" id="parkingDetailsSection">
+            <div class="section-label">Parking details <span id="parkingDetailsHint"></span></div>
+            <div id="parkingDetails"></div>
+          </div>
+
+          <div class="status" id="step1Status" aria-live="polite"></div>
+        </div>
+
+        <div class="step-footer hidden" id="step1Footer">
+          <div class="saved-plate-box hidden" id="savedPlateBox">
+            <span>Saved plate detected</span>
+            <strong id="savedPlateText"></strong>
+          </div>
+          <div class="step1-actions" id="step1Actions">
+            <button type="button" class="secondary-btn hidden" id="useSavedPlate">Use Saved Plate</button>
+            <button type="button" class="primary-btn" id="enterPlateNumber">Enter Plate Number</button>
           </div>
         </div>
+      </section>
 
-        <div class="parking-notice hidden" id="freeParkingNotice" role="status" aria-live="polite">
-          <strong id="freeParkingTitle">Default free-parking period</strong>
-          <span id="freeParkingText"></span>
-          <small>Default schedule only. Holidays, Ramadan, events, special zones and temporary changes are not checked in real time. Always confirm the parking sign.</small>
+      <section class="step" id="step2" data-step="2">
+        <div class="step-head">
+          <div class="step-kicker">Step 2 of 3</div>
+          <h2 class="step-title">Enter your plate</h2>
+          <p class="step-subtitle">Your parking selection stays visible here so you can verify it.</p>
         </div>
 
-        <div class="preview">
-          <div class="preview-head">
-            SMS preview
-            <span id="previewStatus">Incomplete</span>
-          </div>
-          <div class="preview-body">
-            <div class="preview-row">
-              <span>Shortcode</span>
-              <strong id="previewShortcode">—</strong>
-            </div>
-            <div class="preview-row">
-              <span>Message</span>
-              <strong id="previewBody">Select a parking emirate.</strong>
-            </div>
-            <div class="preview-row">
-              <span>Cost</span>
-              <strong id="previewCost">—</strong>
-            </div>
-            <div class="preview-row">
-              <span>Paid hours</span>
-              <strong id="previewHours">—</strong>
+        <div class="step-body">
+          <div class="summary-card" id="parkingSummary"></div>
+
+          <div class="section">
+            <div class="section-label">Plate emirate <span>Vehicle registration</span></div>
+            <div class="tap-grid cols-4" id="plateEmirates">
+              <button type="button" class="tap-btn active" data-value="DXB">DXB<small>Dubai</small></button>
+              <button type="button" class="tap-btn" data-value="AUH">AUH<small>Abu Dhabi</small></button>
+              <button type="button" class="tap-btn" data-value="SHJ">SHJ<small>Sharjah</small></button>
+              <button type="button" class="tap-btn" data-value="AJM">AJM<small>Ajman</small></button>
+              <button type="button" class="tap-btn" data-value="UAQ">UAQ<small>Umm Al Quwain</small></button>
+              <button type="button" class="tap-btn" data-value="RAK">RAK<small>Ras Al Khaimah</small></button>
+              <button type="button" class="tap-btn" data-value="FUJ">FUJ<small>Fujairah</small></button>
             </div>
           </div>
+
+          <div class="section">
+            <div class="fields">
+              <div class="field col-5" id="plateCodeField">
+                <label for="plateCode">Plate code</label>
+                <input id="plateCode" type="text" maxlength="6" autocomplete="off" placeholder="AA">
+              </div>
+              <div class="field col-7">
+                <label for="plateNumber">Plate number</label>
+                <input id="plateNumber" type="text" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="12345">
+              </div>
+            </div>
+
+            <div class="mini-row">
+              <label class="remember">
+                <input id="rememberPlate" type="checkbox" checked>
+                Remember plate
+              </label>
+              <button type="button" class="link-btn" id="clearSaved">Clear saved</button>
+            </div>
+          </div>
+
+          <div class="status" id="step2Status" aria-live="polite"></div>
         </div>
 
-        <div class="actions">
-          <button type="submit" class="primary-btn">Open SMS App</button>
-          <button type="button" class="secondary-btn" id="copyMessage">Copy</button>
+        <div class="step-footer">
+          <div class="footer-actions">
+            <button type="button" class="secondary-btn" data-back="1">Back</button>
+            <button type="button" class="primary-btn" id="previewSms">Preview SMS</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="step" id="step3" data-step="3">
+        <div class="step-head">
+          <div class="step-kicker">Step 3 of 3</div>
+          <h2 class="step-title">Check your SMS</h2>
+          <p class="step-subtitle">Confirm the shortcode, message and parking details before opening Messages.</p>
         </div>
 
-        <div class="status" id="statusMessage" aria-live="polite"></div>
-        <div class="info-line">
-          Information is not updated in real time and may change by location, holiday, Ramadan, event or authority announcement. Verify the sign before sending.<br>
-          <strong>Page rules last reviewed: 16 July 2026.</strong>
+        <div class="step-body">
+          <div class="summary-card" id="finalSummary"></div>
+
+          <div class="parking-notice hidden" id="freeParkingNotice" role="status">
+            <strong id="freeParkingTitle"></strong>
+            <span id="freeParkingText"></span>
+            <small>This uses the default parking schedule only. Holidays, Ramadan, events, special zones and temporary authority changes are not checked in real time.</small>
+          </div>
+
+          <div class="sms-card">
+            <div class="sms-head">SMS Preview <span id="smsReady">Ready</span></div>
+            <div class="sms-body">
+              <div class="sms-row"><span>Shortcode</span><strong id="previewShortcode">—</strong></div>
+              <div class="sms-row"><span>Message</span><strong class="sms-message" id="previewBody">—</strong></div>
+              <div class="sms-row"><span>Cost</span><strong id="previewCost">—</strong></div>
+              <div class="sms-row"><span>Paid hours</span><strong id="previewHours">—</strong></div>
+            </div>
+          </div>
+
+          <div class="page-note">
+            Fees and parking hours are informational and may change. Always verify the parking sign and confirmation SMS.<br>
+            <strong>Page last updated: 14 August 2026.</strong><br>
+            Parking rules last reviewed: 16 July 2026.
+          </div>
+
+          <div class="status" id="step3Status" aria-live="polite"></div>
         </div>
-      </form>
-    </section>
+
+        <div class="step-footer">
+          <div class="footer-actions">
+            <button type="button" class="secondary-btn" data-back="2">Back</button>
+            <button type="button" class="primary-btn" id="openSms">Open SMS App</button>
+          </div>
+          <button type="button" class="secondary-btn" id="copySms" style="margin-top:7px;">Copy SMS</button>
+        </div>
+      </section>
+    </div>
   </main>
 
   <script>
     (() => {
       "use strict";
 
-      const STORAGE_KEY = "uaeParkingSms.vehicle.v2";
+      const VEHICLE_KEY = "uaeParkingSms.vehicle.v2";
+      const THEME_KEY = "uaeParkingSms.theme.v1";
 
       const systems = {
         dubai: [
-          {
-            id: "dubai_rta",
-            label: "RTA / Parkin",
-            short: "Public parking"
-          },
-          {
-            id: "parkonic",
-            label: "Parkonic",
-            short: "Private zones"
-          }
+          { id: "dubai_rta", label: "RTA / Parkin", short: "Public parking" },
+          { id: "parkonic", label: "Parkonic", short: "Private parking" }
         ],
-        abu_dhabi: [
-          {
-            id: "mawaqif",
-            label: "Mawaqif",
-            short: "Public parking"
-          }
-        ],
+        abu_dhabi: [{ id: "mawaqif", label: "Mawaqif", short: "Public parking" }],
         sharjah: [
-          {
-            id: "sharjah_city",
-            label: "Sharjah City",
-            short: "Public parking"
-          },
-          {
-            id: "khorfakkan",
-            label: "Khorfakkan",
-            short: "KH parking"
-          }
+          { id: "sharjah_city", label: "Sharjah City", short: "Public parking" },
+          { id: "khorfakkan", label: "Khorfakkan", short: "KH parking" }
         ],
-        ajman: [
-          {
-            id: "ajman_public",
-            label: "Ajman Parking",
-            short: "1-hour SMS"
-          }
-        ]
+        ajman: [{ id: "ajman_public", label: "Ajman Parking", short: "Public parking" }]
       };
 
       const parkonicZones = [
-        ["P100", "Dubai Harbour"],
-        ["P101", "Golden Mile"],
-        ["P102", "Galleria Mall"],
-        ["P103", "Global Village"],
-        ["P104", "Nad Al Hamar"],
-        ["P105", "JVC"],
-        ["P106", "Discovery Gardens"],
-        ["P107", "Dubai Silicon Oasis"],
-        ["P108", "Palm Crescent"],
-        ["P109", "Peninsula Five"],
-        ["P110", "Tilal Al Ghaf"],
-        ["CUSTOM", "Other code"]
+        ["P100", "Dubai Harbour"], ["P101", "Golden Mile"], ["P102", "Galleria Mall"],
+        ["P103", "Global Village"], ["P104", "Nad Al Hamar"], ["P105", "JVC"],
+        ["P106", "Discovery Gardens"], ["P107", "Dubai Silicon Oasis"], ["P108", "Palm Crescent"],
+        ["P109", "Peninsula Five"], ["P110", "Tilal Al Ghaf"], ["CUSTOM", "Other code"]
       ];
 
-      const $ = (id) => document.getElementById(id);
-
-      const state = {
-        parkingEmirate: "",
-        system: "",
-        plateEmirate: "DXB"
+      const emirateNames = { dubai: "Dubai", abu_dhabi: "Abu Dhabi", sharjah: "Sharjah", ajman: "Ajman" };
+      const systemNames = {
+        dubai_rta: "RTA / Parkin", parkonic: "Parkonic", mawaqif: "Mawaqif",
+        sharjah_city: "Sharjah City", khorfakkan: "Khorfakkan", ajman_public: "Ajman Parking"
+      };
+      const shortcodeBySystem = {
+        dubai_rta: "7275", parkonic: "6670", mawaqif: "3009",
+        sharjah_city: "5566", khorfakkan: "5566", ajman_public: "5155"
       };
 
-      const parkingOptionSection = $("parkingOptionSection");
-      const parkingOptions = $("parkingOptions");
-      const systemFieldsSection = $("systemFieldsSection");
-      const systemFields = $("systemFields");
-      const systemHint = $("systemHint");
-      const plateCodeField = $("plateCodeField");
-      const plateCode = $("plateCode");
-      const plateNumber = $("plateNumber");
-      const rememberPlate = $("rememberPlate");
-      const previewShortcode = $("previewShortcode");
-      const previewBody = $("previewBody");
-      const previewCost = $("previewCost");
-      const previewHours = $("previewHours");
-      const previewStatus = $("previewStatus");
-      const freeParkingNotice = $("freeParkingNotice");
-      const freeParkingTitle = $("freeParkingTitle");
-      const freeParkingText = $("freeParkingText");
-      const statusMessage = $("statusMessage");
+      const $ = (id) => document.getElementById(id);
+      const state = { step: 1, parkingEmirate: "", system: "", parking: {}, plateEmirate: "DXB", savedVehicle: null };
 
-      function setStatus(message = "", type = "") {
-        statusMessage.textContent = message;
-        statusMessage.className = `status ${type}`.trim();
-      }
+      function cleanCode(value) { return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
+      function cleanNumber(value) { return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
 
-      function cleanCode(value) {
-        return value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-      }
-
-      function cleanNumber(value) {
-        return value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+      function setStatus(id, message = "", success = false) {
+        const el = $(id);
+        el.textContent = message;
+        el.className = success ? "status success" : "status";
       }
 
       function setActive(container, value) {
+        if (!container) return;
         container.querySelectorAll(".tap-btn").forEach((button) => {
           button.classList.toggle("active", button.dataset.value === value);
         });
       }
 
-      function optionButton(item) {
-        return `
-          <button type="button" class="tap-btn" data-value="${item.id}">
-            ${item.label}
-            <small>${item.short}</small>
-          </button>
-        `;
-      }
-
-      function renderParkingSystems() {
-        const options = systems[state.parkingEmirate] || [];
-        parkingOptions.innerHTML = options.map(optionButton).join("");
-
-        if (!options.length) {
-          parkingOptionSection.classList.add("hidden");
-          systemFieldsSection.classList.add("hidden");
-          state.system = "";
-          updatePreview();
-          return;
-        }
-
-        if (options.length === 1) {
-          parkingOptionSection.classList.add("hidden");
-          state.system = options[0].id;
-          renderSystemFields();
-          return;
-        }
-
-        parkingOptionSection.classList.remove("hidden");
-        state.system = options[0].id;
-        setActive(parkingOptions, state.system);
-
-        parkingOptions.querySelectorAll(".tap-btn").forEach((button) => {
-          button.addEventListener("click", () => {
-            state.system = button.dataset.value;
-            setActive(parkingOptions, state.system);
-            renderSystemFields();
-            setStatus();
-          });
-        });
-
-        renderSystemFields();
-      }
-
-      function tapChoices(id, choices, cols = 4) {
-        return `
-          <div class="tap-grid cols-${cols}" id="${id}">
-            ${choices.map(([value, label]) => `
-              <button type="button" class="tap-btn" data-value="${value}">${label}</button>
-            `).join("")}
-          </div>
-        `;
-      }
-
-      function wireTapChoices(id, defaultValue) {
-        const container = $(id);
-        if (!container) return;
-
-        setActive(container, defaultValue);
-
-        container.querySelectorAll(".tap-btn").forEach((button) => {
-          button.addEventListener("click", () => {
-            setActive(container, button.dataset.value);
-            updatePreview();
-          });
-        });
-      }
-
-      function renderSystemFields() {
-        systemFieldsSection.classList.remove("hidden");
-
-        if (state.system === "dubai_rta") {
-          systemHint.textContent = "7275";
-          systemFields.innerHTML = `
-            <div class="fields">
-              <div class="field col-7">
-                <label for="zoneCode">RTA zone</label>
-                <input id="zoneCode" type="text" maxlength="10" placeholder="335A">
-              </div>
-              <div class="field col-5">
-                <label>Hours</label>
-                ${tapChoices("durationChoices", [["1","1"],["2","2"],["3","3"],["4","4"]], 4)}
-              </div>
-            </div>
-            <div class="section-label" style="margin-top:7px;">Tariff type <span>Check the sign</span></div>
-            ${tapChoices("dubaiTariffChoices", [["standard","Standard"],["premium","Premium"]], 2)}
-          `;
-          wireTapChoices("durationChoices", "1");
-          wireTapChoices("dubaiTariffChoices", "standard");
-        }
-
-        if (state.system === "parkonic") {
-          systemHint.textContent = "6670";
-          systemFields.innerHTML = `
-            <div class="section-label" style="margin-top:0;">Parkonic zone <span>Tap one</span></div>
-            <div class="tap-grid cols-3" id="parkonicZoneChoices">
-              ${parkonicZones.map(([value, label]) => `
-                <button type="button" class="tap-btn" data-value="${value}">
-                  ${value}
-                  <small>${label}</small>
-                </button>
-              `).join("")}
-            </div>
-            <div id="customZoneWrap" class="field hidden" style="margin-top:8px;">
-              <label for="customParkonicZone">Custom code</label>
-              <input id="customParkonicZone" type="text" maxlength="12" placeholder="P111">
-            </div>
-            <div class="section-label" style="margin-top:10px;">Hours <span>Tap one</span></div>
-            ${tapChoices("durationChoices", [["1","1"],["2","2"],["3","3"],["4","4"],["5","5"],["8","8"]], 3)}
-          `;
-
-          const zoneChoices = $("parkonicZoneChoices");
-          setActive(zoneChoices, "P105");
-
-          zoneChoices.querySelectorAll(".tap-btn").forEach((button) => {
-            button.addEventListener("click", () => {
-              setActive(zoneChoices, button.dataset.value);
-              $("customZoneWrap").classList.toggle("hidden", button.dataset.value !== "CUSTOM");
-              updatePreview();
-            });
-          });
-
-          wireTapChoices("durationChoices", "1");
-        }
-
-        if (state.system === "mawaqif") {
-          systemHint.textContent = "3009";
-          systemFields.innerHTML = `
-            <div class="section-label" style="margin-top:0;">Parking type <span>Tap one</span></div>
-            ${tapChoices("parkingTypeChoices", [["S","Standard"],["P","Premium"]], 2)}
-            <div class="section-label" style="margin-top:10px;">Hours <span>Tap one</span></div>
-            ${tapChoices("durationChoices", [["1","1"],["2","2"],["3","3"],["4","4"],["5","5"],["8","8"]], 3)}
-          `;
-          wireTapChoices("parkingTypeChoices", "S");
-          wireTapChoices("durationChoices", "1");
-        }
-
-        if (state.system === "sharjah_city" || state.system === "khorfakkan") {
-          systemHint.textContent = "5566";
-          systemFields.innerHTML = `
-            <div class="section-label" style="margin-top:0;">Parking sign <span>Blue signs charge every day</span></div>
-            ${tapChoices("sharjahSignChoices", [["regular","Regular"],["blue","Blue 7-day"]], 2)}
-            <div class="section-label" style="margin-top:7px;">Hours <span>Tap one</span></div>
-            ${tapChoices("durationChoices", [["1","1"],["2","2"],["3","3"],["5","5"]], 4)}
-          `;
-          wireTapChoices("sharjahSignChoices", "regular");
-          wireTapChoices("durationChoices", "1");
-        }
-
-        if (state.system === "ajman_public") {
-          systemHint.textContent = "5155";
-          systemFields.innerHTML = `
-            <div class="hint">Ajman SMS parking uses the plate emirate, plate code and plate number. The documented session is one hour.</div>
-          `;
-        }
-
-        systemFields.querySelectorAll("input").forEach((input) => {
-          input.addEventListener("input", updatePreview);
-        });
-
-        updatePlateCodeVisibility();
-        updatePreview();
-      }
-
-      function activeValue(id, fallback = "") {
-        const active = $(id)?.querySelector(".tap-btn.active");
-        return active ? active.dataset.value : fallback;
-      }
-
-      function updatePlateCodeVisibility() {
-        const hidden = state.system === "sharjah_city" || state.system === "khorfakkan";
-        plateCodeField.classList.toggle("hidden", hidden);
-      }
-
-      function getUaeTime() {
-        const formatter = new Intl.DateTimeFormat("en-GB", {
-          timeZone: "Asia/Dubai",
-          weekday: "long",
-          hour: "2-digit",
-          minute: "2-digit",
-          hourCycle: "h23"
-        });
-
+      function uaeTime() {
         const parts = Object.fromEntries(
-          formatter.formatToParts(new Date())
+          new Intl.DateTimeFormat("en-GB", {
+            timeZone: "Asia/Dubai",
+            weekday: "long",
+            hour: "2-digit",
+            minute: "2-digit",
+            hourCycle: "h23"
+          }).formatToParts(new Date())
             .filter((part) => part.type !== "literal")
             .map((part) => [part.type, part.value])
         );
 
-        return {
-          weekday: parts.weekday,
-          hour: Number(parts.hour),
-          minute: Number(parts.minute),
-          totalMinutes: (Number(parts.hour) * 60) + Number(parts.minute)
-        };
+        const hour = Number(parts.hour);
+        const minute = Number(parts.minute);
+        return { weekday: parts.weekday, hour, minute, totalMinutes: hour * 60 + minute };
       }
 
-      function isWithinTime(totalMinutes, startMinutes, endMinutes) {
-        if (startMinutes < endMinutes) {
-          return totalMinutes >= startMinutes && totalMinutes < endMinutes;
-        }
-
-        return totalMinutes >= startMinutes || totalMinutes < endMinutes;
+      function autoTheme() {
+        if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+        const hour = uaeTime().hour;
+        return hour >= 7 && hour < 19 ? "light" : "dark";
       }
 
-      function getParkingSchedule() {
-        const time = getUaeTime();
-        const system = state.system;
-        const duration = Number(activeValue("durationChoices", "1"));
-        const isSunday = time.weekday === "Sunday";
-        const isFriday = time.weekday === "Friday";
-        const isDubaiPeak =
-          isWithinTime(time.totalMinutes, 8 * 60, 10 * 60) ||
-          isWithinTime(time.totalMinutes, 16 * 60, 20 * 60);
-
-        if (system === "dubai_rta") {
-          const tariffType = activeValue("dubaiTariffChoices", "standard");
-          const isFree = isSunday || isWithinTime(time.totalMinutes, 22 * 60, 8 * 60);
-          let cost;
-
-          if (isFree) {
-            cost = "AED 0 during the default free period";
-          } else if (isDubaiPeak) {
-            const hourlyRate = tariffType === "premium" ? 6 : 4;
-            cost = `About AED ${hourlyRate * duration} (${hourlyRate}/hour ${tariffType} peak rate)`;
-          } else {
-            cost = "Off-peak cost varies by zone; check the tariff sign";
-          }
-
-          return {
-            isFree,
-            title: "Dubai public parking appears free now",
-            reason: isSunday
-              ? "The default Parkin schedule treats Sunday as free all day."
-              : "The default Parkin schedule is free overnight from 10:00 PM to 8:00 AM.",
-            paidHours: "Mon–Sat, 8:00 AM–10:00 PM",
-            cost
-          };
-        }
-
-        if (system === "parkonic") {
-          return {
-            isFree: false,
-            title: "",
-            reason: "",
-            paidHours: "Varies by private Parkonic location",
-            cost: "Varies by zone, location and displayed tariff"
-          };
-        }
-
-        if (system === "mawaqif") {
-          const parkingType = activeValue("parkingTypeChoices", "S");
-          const isFree = isSunday || time.totalMinutes < 8 * 60;
-          const hourlyRate = parkingType === "P" ? 3 : 2;
-          const estimated = parkingType === "S"
-            ? Math.min(hourlyRate * duration, 15)
-            : hourlyRate * duration;
-
-          return {
-            isFree,
-            title: "Abu Dhabi Mawaqif appears free now",
-            reason: isSunday
-              ? "The default Mawaqif schedule treats Sunday as free all day."
-              : "The default Mawaqif schedule is free from midnight to 8:00 AM.",
-            paidHours: "Mon–Sat, 8:00 AM–12:00 midnight",
-            cost: isFree
-              ? "AED 0 during the default free period"
-              : parkingType === "P"
-                ? `About AED ${estimated} (AED 3/hour, maximum stay 4 hours)`
-                : `About AED ${estimated} (AED 2/hour; AED 15 daily cap)`
-          };
-        }
-
-        if (system === "sharjah_city" || system === "khorfakkan") {
-          const signType = activeValue("sharjahSignChoices", "regular");
-          const overnightFree = time.totalMinutes < 8 * 60;
-          const regularFridayFree = signType === "regular" && isFriday;
-          const isFree = overnightFree || regularFridayFree;
-
-          return {
-            isFree,
-            title: system === "khorfakkan"
-              ? "Khorfakkan parking appears free now"
-              : "Sharjah public parking appears free now",
-            reason: regularFridayFree
-              ? "The default regular-sign schedule treats Friday as free. Blue 7-day signs remain chargeable."
-              : "The current default paid-parking schedule starts at 8:00 AM.",
-            paidHours: signType === "blue"
-              ? "Every day, 8:00 AM–12:00 midnight"
-              : "Sat–Thu, 8:00 AM–12:00 midnight",
-            cost: isFree
-              ? "AED 0 during the default free period"
-              : `About AED ${(2.38 * duration).toFixed(2)} by SMS; confirm the current fee`
-          };
-        }
-
-        if (system === "ajman_public") {
-          const middayFree = isWithinTime(time.totalMinutes, 13 * 60, 17 * 60);
-          const overnightFree = isWithinTime(time.totalMinutes, 22 * 60, 8 * 60);
-          const isFree = isFriday || middayFree || overnightFree;
-
-          return {
-            isFree,
-            title: "Ajman public parking may be free now",
-            reason: isFriday
-              ? "The commonly published default schedule treats Friday as free."
-              : middayFree
-                ? "The commonly published default schedule has a free break from 1:00 PM to 5:00 PM."
-                : "The commonly published default schedule is free overnight from 10:00 PM to 8:00 AM.",
-            paidHours: "Sat–Thu, 8:00 AM–1:00 PM and 5:00 PM–10:00 PM",
-            cost: isFree
-              ? "AED 0 during the default free period"
-              : "AED 2.38 for the one-hour SMS reservation"
-          };
-        }
-
-        return {
-          isFree: false,
-          title: "",
-          reason: "",
-          paidHours: "—",
-          cost: "—"
-        };
+      function applyThemePreference() {
+        const pref = localStorage.getItem(THEME_KEY) || "auto";
+        const theme = pref === "light" ? "light" : autoTheme();
+        document.documentElement.dataset.theme = theme;
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#11171d" : "#f6f8fa");
+        $("themeAuto").classList.toggle("active", pref === "auto");
+        $("themeLight").classList.toggle("active", pref === "light");
       }
 
-      function updateParkingNotice() {
-        const schedule = getParkingSchedule();
+      document.querySelectorAll("[data-theme-pref]").forEach((button) => {
+        button.addEventListener("click", () => {
+          localStorage.setItem(THEME_KEY, button.dataset.themePref);
+          applyThemePreference();
+        });
+      });
 
-        previewCost.textContent = schedule.cost;
-        previewHours.textContent = schedule.paidHours;
+      const darkMedia = window.matchMedia("(prefers-color-scheme: dark)");
+      if (darkMedia.addEventListener) darkMedia.addEventListener("change", applyThemePreference);
+      window.setInterval(() => {
+        if ((localStorage.getItem(THEME_KEY) || "auto") === "auto") applyThemePreference();
+      }, 60000);
 
-        if (schedule.isFree) {
-          freeParkingTitle.textContent = schedule.title;
-          freeParkingText.textContent = schedule.reason;
-          freeParkingNotice.classList.remove("hidden");
-        } else {
-          freeParkingNotice.classList.add("hidden");
-          freeParkingTitle.textContent = "";
-          freeParkingText.textContent = "";
-        }
-      }
-
-      function getMessageData() {
-        const source = state.plateEmirate;
-        const code = cleanCode(plateCode.value);
-        const number = cleanNumber(plateNumber.value);
-
-        const invalid = (message) => ({
-          valid: false,
-          shortcode: "",
-          body: "",
-          message
+      function goToStep(step) {
+        state.step = step;
+        document.querySelectorAll(".step").forEach((section) => {
+          const active = Number(section.dataset.step) === step;
+          section.classList.toggle("active", active);
+          if (active) section.querySelector(".step-body")?.scrollTo({ top: 0, behavior: "auto" });
         });
 
-        if (!state.parkingEmirate || !state.system) {
-          return invalid("Select a parking emirate.");
+        if (step === 2) {
+          renderParkingSummary();
+          updatePlateCodeVisibility();
         }
-
-        if (!number) {
-          return invalid("Enter the plate number.");
-        }
-
-        const needsCode = !["sharjah_city", "khorfakkan"].includes(state.system);
-        if (needsCode && !code) {
-          return invalid("Enter the plate code.");
-        }
-
-        if (state.system === "dubai_rta") {
-          const zone = cleanCode($("zoneCode")?.value || "");
-          const duration = activeValue("durationChoices", "1");
-
-          if (!zone) {
-            return invalid("Enter the RTA zone.");
-          }
-
-          const platePart = source === "DXB"
-            ? `${code}${number}`
-            : `${source}${code} ${number}`;
-
-          return {
-            valid: true,
-            shortcode: "7275",
-            body: `${platePart} ${zone} ${duration}`
-          };
-        }
-
-        if (state.system === "parkonic") {
-          const selectedZone = activeValue("parkonicZoneChoices", "P105");
-          const zone = selectedZone === "CUSTOM"
-            ? cleanCode($("customParkonicZone")?.value || "")
-            : selectedZone;
-          const duration = activeValue("durationChoices", "1");
-
-          if (!zone) {
-            return invalid("Enter the Parkonic zone.");
-          }
-
-          return {
-            valid: true,
-            shortcode: "6670",
-            body: `${source}${code} ${number} ${zone} ${duration}`
-          };
-        }
-
-        if (state.system === "mawaqif") {
-          const parkingType = activeValue("parkingTypeChoices", "S");
-          const duration = activeValue("durationChoices", "1");
-
-          if (parkingType === "P" && Number(duration) > 4) {
-            return invalid("Premium Mawaqif has a maximum stay of 4 hours.");
-          }
-
-          return {
-            valid: true,
-            shortcode: "3009",
-            body: `${source}${code} ${number} ${parkingType} ${duration}`
-          };
-        }
-
-        if (state.system === "sharjah_city") {
-          return {
-            valid: true,
-            shortcode: "5566",
-            body: `${source} ${number} ${activeValue("durationChoices", "1")}`
-          };
-        }
-
-        if (state.system === "khorfakkan") {
-          return {
-            valid: true,
-            shortcode: "5566",
-            body: `${source} ${number} KH ${activeValue("durationChoices", "1")}`
-          };
-        }
-
-        if (state.system === "ajman_public") {
-          return {
-            valid: true,
-            shortcode: "5155",
-            body: `${source} ${code} ${number}`
-          };
-        }
-
-        return invalid("Unsupported parking system.");
+        if (step === 3) renderFinalScreen();
       }
 
-      function updatePreview() {
-        updatePlateCodeVisibility();
+      document.querySelectorAll("[data-back]").forEach((button) => {
+        button.addEventListener("click", () => goToStep(Number(button.dataset.back)));
+      });
 
-        const result = getMessageData();
-        previewShortcode.textContent = result.valid ? result.shortcode : "—";
-        previewBody.textContent = result.valid ? result.body : result.message;
-        previewStatus.textContent = result.valid ? "Ready" : "Incomplete";
-        previewStatus.style.color = result.valid ? "var(--success)" : "var(--muted)";
-        updateParkingNotice();
+      function systemButton(system) {
+        return `<button type="button" class="tap-btn" data-value="${system.id}">${system.label}<small>${system.short}</small></button>`;
       }
 
-      function saveVehicle() {
-        if (!rememberPlate.checked) {
-          localStorage.removeItem(STORAGE_KEY);
+      function choiceGrid(id, options, columns = 2) {
+        return `<div class="tap-grid cols-${columns}" id="${id}">${options.map(([value, label, sub]) =>
+          `<button type="button" class="tap-btn" data-value="${value}">${label}${sub ? `<small>${sub}</small>` : ""}</button>`
+        ).join("")}</div>`;
+      }
+
+      function wireChoices(id, key, onChange) {
+        const container = $(id);
+        if (!container) return;
+
+        container.querySelectorAll(".tap-btn").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.parking[key] = button.dataset.value;
+            setActive(container, button.dataset.value);
+            setStatus("step1Status");
+            if (onChange) onChange(button.dataset.value);
+            maybeAdvanceFromStep1();
+          });
+        });
+      }
+
+      function selectParkingEmirate(value) {
+        state.parkingEmirate = value;
+        state.system = "";
+        state.parking = {};
+        setActive($("parkingEmirates"), value);
+
+        const available = systems[value] || [];
+        $("parkingSystems").innerHTML = "";
+        $("parkingDetails").innerHTML = "";
+        $("parkingDetailsSection").classList.add("hidden");
+        $("step1Footer").classList.add("hidden");
+        setStatus("step1Status");
+
+        if (available.length === 1) {
+          $("parkingSystemSection").classList.add("hidden");
+          state.system = available[0].id;
+          renderParkingDetails();
           return;
         }
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          plateEmirate: state.plateEmirate,
-          plateCode: cleanCode(plateCode.value),
-          plateNumber: cleanNumber(plateNumber.value)
-        }));
-      }
-
-      function loadVehicle() {
-        try {
-          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-          if (!saved) return;
-
-          if (saved.plateEmirate) {
-            state.plateEmirate = saved.plateEmirate;
-            setActive($("plateEmirates"), state.plateEmirate);
-          }
-
-          if (saved.plateCode) {
-            plateCode.value = saved.plateCode;
-          }
-
-          if (saved.plateNumber) {
-            plateNumber.value = saved.plateNumber;
-          }
-        } catch {
-          localStorage.removeItem(STORAGE_KEY);
-        }
-      }
-
-      function smsUri(shortcode, body) {
-        const isIOS =
-          /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-        return `sms:${encodeURIComponent(shortcode)}${isIOS ? "&" : "?"}body=${encodeURIComponent(body)}`;
+        $("parkingSystemSection").classList.remove("hidden");
+        $("parkingSystems").innerHTML = available.map(systemButton).join("");
+        $("parkingSystems").querySelectorAll(".tap-btn").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.system = button.dataset.value;
+            state.parking = {};
+            setActive($("parkingSystems"), state.system);
+            renderParkingDetails();
+          });
+        });
       }
 
       $("parkingEmirates").querySelectorAll(".tap-btn").forEach((button) => {
-        button.addEventListener("click", () => {
-          state.parkingEmirate = button.dataset.value;
-          setActive($("parkingEmirates"), state.parkingEmirate);
-          renderParkingSystems();
-          setStatus();
-        });
+        button.addEventListener("click", () => selectParkingEmirate(button.dataset.value));
       });
+
+      function renderParkingDetails() {
+        $("parkingDetailsSection").classList.remove("hidden");
+        $("step1Footer").classList.add("hidden");
+        setStatus("step1Status");
+        const container = $("parkingDetails");
+
+        if (state.system === "dubai_rta") {
+          $("parkingDetailsHint").textContent = "Shortcode 7275";
+          container.innerHTML = `
+            <div class="field"><label for="zoneCode">RTA zone code</label><input id="zoneCode" type="text" maxlength="10" placeholder="335A" autocomplete="off"></div>
+            <div class="section-label" style="margin-top:9px;">Duration <span>Hours</span></div>
+            ${choiceGrid("durationChoices", [["1","1"],["2","2"],["3","3"],["4","4"]], 4)}
+            <div class="section-label" style="margin-top:9px;">Tariff type <span>Check the sign</span></div>
+            ${choiceGrid("tariffChoices", [["standard","Standard"],["premium","Premium"]], 2)}
+          `;
+
+          $("zoneCode").addEventListener("input", (event) => {
+            event.target.value = cleanCode(event.target.value);
+            state.parking.zone = event.target.value;
+            renderStep1Decision();
+          });
+          $("zoneCode").addEventListener("change", maybeAdvanceFromStep1);
+          wireChoices("durationChoices", "duration");
+          wireChoices("tariffChoices", "tariff");
+        }
+
+        if (state.system === "parkonic") {
+          $("parkingDetailsHint").textContent = "Shortcode 6670";
+          container.innerHTML = `
+            <div class="section-label" style="margin-top:0;">Parkonic zone <span>Tap one</span></div>
+            <div class="tap-grid cols-3" id="parkonicZones">
+              ${parkonicZones.map(([value, label]) => `<button type="button" class="tap-btn" data-value="${value}">${value}<small>${label}</small></button>`).join("")}
+            </div>
+            <div class="field hidden" id="customZoneField" style="margin-top:7px;"><label for="customZone">Custom zone</label><input id="customZone" type="text" maxlength="12" placeholder="P111" autocomplete="off"></div>
+            <div class="section-label" style="margin-top:9px;">Duration <span>Hours</span></div>
+            ${choiceGrid("durationChoices", [["1","1"],["2","2"],["3","3"],["4","4"],["5","5"],["8","8"]], 3)}
+          `;
+
+          wireChoices("parkonicZones", "parkonicZone", (value) => {
+            $("customZoneField").classList.toggle("hidden", value !== "CUSTOM");
+            if (value !== "CUSTOM") state.parking.customZone = "";
+          });
+          wireChoices("durationChoices", "duration");
+
+          $("customZone").addEventListener("input", (event) => {
+            event.target.value = cleanCode(event.target.value);
+            state.parking.customZone = event.target.value;
+            renderStep1Decision();
+          });
+          $("customZone").addEventListener("change", maybeAdvanceFromStep1);
+        }
+
+        if (state.system === "mawaqif") {
+          $("parkingDetailsHint").textContent = "Shortcode 3009";
+          container.innerHTML = `
+            <div class="section-label" style="margin-top:0;">Parking type <span>Tap one</span></div>
+            ${choiceGrid("mawaqifTypeChoices", [["S","Standard"],["P","Premium"]], 2)}
+            <div class="section-label" style="margin-top:9px;">Duration <span>Tap one</span></div>
+            <div id="mawaqifDurationWrap"></div>
+          `;
+          wireChoices("mawaqifTypeChoices", "parkingType", renderMawaqifDurations);
+        }
+
+        if (state.system === "sharjah_city" || state.system === "khorfakkan") {
+          $("parkingDetailsHint").textContent = "Shortcode 5566";
+          container.innerHTML = `
+            <div class="section-label" style="margin-top:0;">Parking sign <span>Blue = paid every day</span></div>
+            ${choiceGrid("sharjahSignChoices", [["regular","Regular"],["blue","Blue 7-day"]], 2)}
+            <div class="section-label" style="margin-top:9px;">Duration <span>Hours</span></div>
+            ${choiceGrid("durationChoices", [["1","1"],["2","2"],["3","3"],["5","5"]], 4)}
+          `;
+          wireChoices("sharjahSignChoices", "signType");
+          wireChoices("durationChoices", "duration");
+        }
+
+        if (state.system === "ajman_public") {
+          $("parkingDetailsHint").textContent = "Shortcode 5155";
+          container.innerHTML = `
+            <div class="summary-card">
+              <div class="summary-title">Ajman public parking</div>
+              <div class="summary-line"><span>SMS</span><strong>One-hour reservation</strong></div>
+              <div class="summary-line"><span>Shortcode</span><strong>5155</strong></div>
+            </div>`;
+          maybeAdvanceFromStep1();
+        }
+      }
+
+      function renderMawaqifDurations() {
+        const wrap = $("mawaqifDurationWrap");
+        if (!wrap) return;
+        const premium = state.parking.parkingType === "P";
+        const options = premium
+          ? [["1","1"],["2","2"],["3","3"],["4","4"]]
+          : [["1","1"],["2","2"],["3","3"],["4","4"],["8","8"],["24","24"]];
+        state.parking.duration = "";
+        wrap.innerHTML = choiceGrid("durationChoices", options, premium ? 4 : 3);
+        wireChoices("durationChoices", "duration");
+      }
+
+      function parkingStepComplete() {
+        if (!state.parkingEmirate || !state.system) return false;
+        if (state.system === "dubai_rta") return Boolean(state.parking.zone && state.parking.duration && state.parking.tariff);
+        if (state.system === "parkonic") {
+          const zoneReady = state.parking.parkonicZone && (state.parking.parkonicZone !== "CUSTOM" || state.parking.customZone);
+          return Boolean(zoneReady && state.parking.duration);
+        }
+        if (state.system === "mawaqif") return Boolean(state.parking.parkingType && state.parking.duration);
+        if (state.system === "sharjah_city" || state.system === "khorfakkan") return Boolean(state.parking.signType && state.parking.duration);
+        return state.system === "ajman_public";
+      }
+
+      function readSavedVehicle() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(VEHICLE_KEY) || "null");
+          if (!saved || !cleanNumber(saved.plateNumber) || !saved.plateEmirate) return null;
+
+          return {
+            plateEmirate: saved.plateEmirate,
+            plateCode: cleanCode(saved.plateCode || ""),
+            plateNumber: cleanNumber(saved.plateNumber)
+          };
+        } catch {
+          localStorage.removeItem(VEHICLE_KEY);
+          return null;
+        }
+      }
+
+      function savedPlateCanBeUsed() {
+        const saved = state.savedVehicle || readSavedVehicle();
+        if (!saved) return false;
+
+        const needsCode = !["sharjah_city", "khorfakkan"].includes(state.system);
+        return Boolean(saved.plateNumber && saved.plateEmirate && (!needsCode || saved.plateCode));
+      }
+
+      function savedPlateLabel(saved) {
+        if (!saved) return "";
+        const code = saved.plateCode ? ` ${saved.plateCode}` : "";
+        return `${saved.plateEmirate}${code} ${saved.plateNumber}`;
+      }
+
+      function renderStep1Decision() {
+        const complete = parkingStepComplete();
+        const footer = $("step1Footer");
+
+        if (!complete) {
+          footer.classList.add("hidden");
+          return;
+        }
+
+        state.savedVehicle = readSavedVehicle();
+        const canUseSaved = savedPlateCanBeUsed();
+
+        footer.classList.remove("hidden");
+        $("savedPlateBox").classList.toggle("hidden", !canUseSaved);
+        $("useSavedPlate").classList.toggle("hidden", !canUseSaved);
+        $("step1Actions").classList.toggle("has-saved", canUseSaved);
+
+        if (canUseSaved) {
+          $("savedPlateText").textContent = savedPlateLabel(state.savedVehicle);
+        } else {
+          $("savedPlateText").textContent = "";
+        }
+      }
+
+      function maybeAdvanceFromStep1() {
+        renderStep1Decision();
+      }
+
+      function applySavedVehicle(saved) {
+        if (!saved) return;
+
+        state.plateEmirate = saved.plateEmirate || "DXB";
+        $("plateCode").value = cleanCode(saved.plateCode || "");
+        $("plateNumber").value = cleanNumber(saved.plateNumber || "");
+        setActive($("plateEmirates"), state.plateEmirate);
+      }
+
+      $("useSavedPlate").addEventListener("click", () => {
+        if (!parkingStepComplete()) {
+          setStatus("step1Status", "Complete the parking details first.");
+          return;
+        }
+
+        state.savedVehicle = readSavedVehicle();
+        if (!savedPlateCanBeUsed()) {
+          renderStep1Decision();
+          setStatus("step1Status", "The saved plate is incomplete. Enter the plate number instead.");
+          return;
+        }
+
+        applySavedVehicle(state.savedVehicle);
+        goToStep(3);
+      });
+
+      $("enterPlateNumber").addEventListener("click", () => {
+        if (!parkingStepComplete()) {
+          setStatus("step1Status", "Complete the parking details first.");
+          return;
+        }
+
+        state.plateEmirate = "DXB";
+        $("plateCode").value = "";
+        $("plateNumber").value = "";
+        setActive($("plateEmirates"), "DXB");
+        goToStep(2);
+      });
+
+      function parkingDetailsText() {
+        if (state.system === "dubai_rta") return `Zone ${state.parking.zone} · ${state.parking.duration}h · ${state.parking.tariff}`;
+        if (state.system === "parkonic") {
+          const zone = state.parking.parkonicZone === "CUSTOM" ? state.parking.customZone : state.parking.parkonicZone;
+          return `${zone} · ${state.parking.duration}h`;
+        }
+        if (state.system === "mawaqif") return `${state.parking.parkingType === "P" ? "Premium" : "Standard"} · ${state.parking.duration}h`;
+        if (state.system === "sharjah_city" || state.system === "khorfakkan") {
+          return `${state.parking.signType === "blue" ? "Blue 7-day sign" : "Regular sign"} · ${state.parking.duration}h`;
+        }
+        if (state.system === "ajman_public") return "One-hour SMS reservation";
+        return "—";
+      }
+
+      function renderParkingSummary() {
+        $("parkingSummary").innerHTML = `
+          <div class="summary-title">${emirateNames[state.parkingEmirate]} · ${systemNames[state.system]}</div>
+          <div class="summary-line"><span>Details</span><strong>${parkingDetailsText()}</strong></div>
+          <div class="summary-line"><span>Shortcode</span><strong>${shortcodeBySystem[state.system]}</strong></div>`;
+      }
+
+      function updatePlateCodeVisibility() {
+        const codeNotNeeded = state.system === "sharjah_city" || state.system === "khorfakkan";
+        $("plateCodeField").classList.toggle("hidden", codeNotNeeded);
+      }
 
       $("plateEmirates").querySelectorAll(".tap-btn").forEach((button) => {
         button.addEventListener("click", () => {
           state.plateEmirate = button.dataset.value;
           setActive($("plateEmirates"), state.plateEmirate);
-          updatePreview();
-          setStatus();
+          setStatus("step2Status");
         });
       });
 
-      [plateCode, plateNumber].forEach((input) => {
-        input.addEventListener("input", () => {
-          input.value = input === plateCode
-            ? cleanCode(input.value)
-            : cleanNumber(input.value);
-
-          updatePreview();
-        });
+      $("plateCode").addEventListener("input", (event) => {
+        event.target.value = cleanCode(event.target.value);
+        setStatus("step2Status");
       });
+      $("plateNumber").addEventListener("input", (event) => {
+        event.target.value = cleanNumber(event.target.value);
+        setStatus("step2Status");
+      });
+      $("plateNumber").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          previewSms();
+        }
+      });
+
+      function saveVehicle() {
+        if (!$("rememberPlate").checked) {
+          localStorage.removeItem(VEHICLE_KEY);
+          return;
+        }
+        localStorage.setItem(VEHICLE_KEY, JSON.stringify({
+          plateEmirate: state.plateEmirate,
+          plateCode: cleanCode($("plateCode").value),
+          plateNumber: cleanNumber($("plateNumber").value)
+        }));
+      }
+
+      function loadVehicle() {
+        state.savedVehicle = readSavedVehicle();
+        renderStep1Decision();
+      }
 
       $("clearSaved").addEventListener("click", () => {
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(VEHICLE_KEY);
         state.plateEmirate = "DXB";
         setActive($("plateEmirates"), "DXB");
-        plateCode.value = "";
-        plateNumber.value = "";
-        updatePreview();
-        setStatus("Saved plate cleared.", "success");
+        $("plateCode").value = "";
+        $("plateNumber").value = "";
+        state.savedVehicle = null;
+        renderStep1Decision();
+        setStatus("step2Status", "Saved plate cleared.", true);
       });
 
-      $("copyMessage").addEventListener("click", async () => {
-        const result = getMessageData();
+      function buildMessage() {
+        const source = state.plateEmirate;
+        const code = cleanCode($("plateCode").value);
+        const number = cleanNumber($("plateNumber").value);
+        const needsCode = !["sharjah_city", "khorfakkan"].includes(state.system);
 
+        if (!number) return { valid: false, message: "Enter the plate number." };
+        if (needsCode && !code) return { valid: false, message: "Enter the plate code." };
+
+        if (state.system === "dubai_rta") {
+          const platePart = source === "DXB" ? `${code}${number}` : `${source}${code} ${number}`;
+          return { valid: true, shortcode: "7275", body: `${platePart} ${state.parking.zone} ${state.parking.duration}` };
+        }
+        if (state.system === "parkonic") {
+          const zone = state.parking.parkonicZone === "CUSTOM" ? state.parking.customZone : state.parking.parkonicZone;
+          return { valid: true, shortcode: "6670", body: `${source}${code} ${number} ${zone} ${state.parking.duration}` };
+        }
+        if (state.system === "mawaqif") {
+          return { valid: true, shortcode: "3009", body: `${source}${code} ${number} ${state.parking.parkingType} ${state.parking.duration}` };
+        }
+        if (state.system === "sharjah_city") {
+          return { valid: true, shortcode: "5566", body: `${source} ${number} ${state.parking.duration}` };
+        }
+        if (state.system === "khorfakkan") {
+          return { valid: true, shortcode: "5566", body: `${source} ${number} KH ${state.parking.duration}` };
+        }
+        if (state.system === "ajman_public") {
+          return { valid: true, shortcode: "5155", body: `${source} ${code} ${number}` };
+        }
+        return { valid: false, message: "Parking system is not configured." };
+      }
+
+      function isWithinTime(totalMinutes, startMinutes, endMinutes) {
+        return startMinutes < endMinutes
+          ? totalMinutes >= startMinutes && totalMinutes < endMinutes
+          : totalMinutes >= startMinutes || totalMinutes < endMinutes;
+      }
+
+      function parkingSchedule() {
+        const time = uaeTime();
+        const duration = Number(state.parking.duration || 1);
+        const isSunday = time.weekday === "Sunday";
+        const isFriday = time.weekday === "Friday";
+
+        if (state.system === "dubai_rta") {
+          const isFree = isSunday || isWithinTime(time.totalMinutes, 22 * 60, 8 * 60);
+          const isPeak = isWithinTime(time.totalMinutes, 8 * 60, 10 * 60) || isWithinTime(time.totalMinutes, 16 * 60, 20 * 60);
+          let cost = "Off-peak cost varies by zone; check the tariff sign.";
+          if (isFree) cost = "AED 0 during the default free period";
+          else if (isPeak) {
+            const rate = state.parking.tariff === "premium" ? 6 : 4;
+            cost = `About AED ${rate * duration} (${rate}/hour peak rate)`;
+          }
+          return {
+            isFree,
+            title: "Dubai public parking appears free now",
+            reason: isSunday ? "The default schedule treats Sunday as free all day." : "The default schedule is free overnight from 10:00 PM to 8:00 AM.",
+            hours: "Mon–Sat, 8:00 AM–10:00 PM",
+            cost
+          };
+        }
+
+        if (state.system === "parkonic") {
+          return { isFree: false, title: "", reason: "", hours: "Varies by private Parkonic location", cost: "Varies by zone and displayed tariff" };
+        }
+
+        if (state.system === "mawaqif") {
+          const isFree = isSunday || time.totalMinutes < 8 * 60;
+          const premium = state.parking.parkingType === "P";
+          const rate = premium ? 3 : 2;
+          const estimate = premium ? rate * duration : Math.min(rate * duration, 15);
+          return {
+            isFree,
+            title: "Abu Dhabi Mawaqif appears free now",
+            reason: isSunday ? "The default schedule treats Sunday as free all day." : "The default schedule is free from midnight to 8:00 AM.",
+            hours: "Mon–Sat, 8:00 AM–12:00 midnight",
+            cost: isFree ? "AED 0 during the default free period" : premium ? `About AED ${estimate} (AED 3/hour)` : `About AED ${estimate} (AED 2/hour; AED 15 daily cap)`
+          };
+        }
+
+        if (state.system === "sharjah_city" || state.system === "khorfakkan") {
+          const regularFridayFree = state.parking.signType === "regular" && isFriday;
+          const overnightFree = time.totalMinutes < 8 * 60;
+          const isFree = regularFridayFree || overnightFree;
+          return {
+            isFree,
+            title: state.system === "khorfakkan" ? "Khorfakkan parking appears free now" : "Sharjah public parking appears free now",
+            reason: regularFridayFree ? "The default regular-sign schedule treats Friday as free. Blue 7-day signs remain chargeable." : "The default paid schedule starts at 8:00 AM.",
+            hours: state.parking.signType === "blue" ? "Every day, 8:00 AM–12:00 midnight" : "Sat–Thu, 8:00 AM–12:00 midnight",
+            cost: isFree ? "AED 0 during the default free period" : `About AED ${(2.38 * duration).toFixed(2)} by SMS; confirm the current fee`
+          };
+        }
+
+        if (state.system === "ajman_public") {
+          const middayFree = isWithinTime(time.totalMinutes, 13 * 60, 17 * 60);
+          const overnightFree = isWithinTime(time.totalMinutes, 22 * 60, 8 * 60);
+          const isFree = isFriday || middayFree || overnightFree;
+          return {
+            isFree,
+            title: "Ajman public parking may be free now",
+            reason: isFriday ? "The commonly published default schedule treats Friday as free." : middayFree ? "The commonly published default schedule has a free break from 1:00 PM to 5:00 PM." : "The commonly published default schedule is free overnight from 10:00 PM to 8:00 AM.",
+            hours: "Sat–Thu, 8:00 AM–1:00 PM and 5:00 PM–10:00 PM",
+            cost: isFree ? "AED 0 during the default free period" : "AED 2.38 for the one-hour SMS reservation"
+          };
+        }
+
+        return { isFree: false, title: "", reason: "", hours: "—", cost: "—" };
+      }
+
+      function previewSms() {
+        const result = buildMessage();
         if (!result.valid) {
-          setStatus(result.message, "error");
+          setStatus("step2Status", result.message);
+          return;
+        }
+        saveVehicle();
+        goToStep(3);
+      }
+
+      $("previewSms").addEventListener("click", previewSms);
+
+      function renderFinalScreen() {
+        const result = buildMessage();
+        if (!result.valid) {
+          goToStep(2);
+          setStatus("step2Status", result.message);
+          return;
+        }
+
+        const code = cleanCode($("plateCode").value);
+        const number = cleanNumber($("plateNumber").value);
+        const plateDisplay = ["sharjah_city", "khorfakkan"].includes(state.system)
+          ? `${state.plateEmirate} ${number}`
+          : `${state.plateEmirate} ${code} ${number}`;
+
+        $("finalSummary").innerHTML = `
+          <div class="summary-title">${emirateNames[state.parkingEmirate]} · ${systemNames[state.system]}</div>
+          <div class="summary-line"><span>Parking</span><strong>${parkingDetailsText()}</strong></div>
+          <div class="summary-line"><span>Plate</span><strong>${plateDisplay}</strong></div>`;
+
+        $("previewShortcode").textContent = result.shortcode;
+        $("previewBody").textContent = result.body;
+
+        const schedule = parkingSchedule();
+        $("previewCost").textContent = schedule.cost;
+        $("previewHours").textContent = schedule.hours;
+
+        if (schedule.isFree) {
+          $("freeParkingTitle").textContent = schedule.title;
+          $("freeParkingText").textContent = schedule.reason;
+          $("freeParkingNotice").classList.remove("hidden");
+        } else {
+          $("freeParkingNotice").classList.add("hidden");
+        }
+        setStatus("step3Status");
+      }
+
+      function smsUri(shortcode, body) {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        return `sms:${encodeURIComponent(shortcode)}${isIOS ? "&" : "?"}body=${encodeURIComponent(body)}`;
+      }
+
+      $("openSms").addEventListener("click", () => {
+        const result = buildMessage();
+        if (!result.valid) {
+          setStatus("step3Status", result.message);
+          return;
+        }
+        saveVehicle();
+        window.location.href = smsUri(result.shortcode, result.body);
+      });
+
+      $("copySms").addEventListener("click", async () => {
+        const result = buildMessage();
+        if (!result.valid) {
+          setStatus("step3Status", result.message);
           return;
         }
 
         const text = `To: ${result.shortcode}\n${result.body}`;
-
         try {
           await navigator.clipboard.writeText(text);
-          setStatus("Copied.", "success");
+          setStatus("step3Status", "SMS copied.", true);
         } catch {
           const textarea = document.createElement("textarea");
           textarea.value = text;
@@ -1257,28 +1552,13 @@
           textarea.select();
           document.execCommand("copy");
           textarea.remove();
-          setStatus("Copied.", "success");
+          setStatus("step3Status", "SMS copied.", true);
         }
-      });
-
-      $("parkingForm").addEventListener("submit", (event) => {
-        event.preventDefault();
-
-        const result = getMessageData();
-
-        if (!result.valid) {
-          setStatus(result.message, "error");
-          return;
-        }
-
-        saveVehicle();
-        setStatus("Opening SMS app…", "success");
-        window.location.href = smsUri(result.shortcode, result.body);
       });
 
       loadVehicle();
-      updatePreview();
-      window.setInterval(updateParkingNotice, 60000);
+      applyThemePreference();
+      updatePlateCodeVisibility();
     })();
   </script>
 </body>
