@@ -37,13 +37,13 @@
   <style>
 :root {
       color-scheme: light;
-      --primary: #2f5d7c;
-      --primary-strong: #244a63;
+      --primary: #0f6b66;
+      --primary-strong: #0b5652;
       --primary-on: #ffffff;
 
-      --selected-bg: #e7f0f8;
-      --selected-border: #7ea2bd;
-      --selected-text: #17324d;
+      --selected-bg: #dff3f1;
+      --selected-border: #4f9b95;
+      --selected-text: #0d4f4b;
 
       --success: #176a3a;
       --danger: #a93232;
@@ -63,13 +63,13 @@
 
     html[data-theme="dark"] {
       color-scheme: dark;
-      --primary: #8ebbd5;
-      --primary-strong: #a8cce0;
-      --primary-on: #102432;
+      --primary: #72c9c2;
+      --primary-strong: #8bd9d2;
+      --primary-on: #0f2221;
 
-      --selected-bg: #263b49;
-      --selected-border: #6e96ad;
-      --selected-text: #f4f8fb;
+      --selected-bg: #1f3b39;
+      --selected-border: #65aaa5;
+      --selected-text: #f4fbfa;
 
       --success: #8edbaa;
       --danger: #ff9a9a;
@@ -314,15 +314,31 @@
     }
 
     .tap-btn.active {
-      border-color: var(--selected-border);
+      border: 2px solid var(--selected-border);
       background: var(--selected-bg);
       color: var(--selected-text);
-      box-shadow: 0 0 0 2px rgba(47, 93, 124, 0.10);
+      box-shadow:
+        0 0 0 2px rgba(15, 107, 102, 0.10),
+        inset 4px 0 0 var(--primary);
     }
 
     .tap-btn.active small {
       color: var(--selected-text);
       opacity: 0.82;
+    }
+
+    .required-note {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.35;
+      font-weight: 400;
+    }
+
+    .required-note strong {
+      color: var(--text);
+      font-weight: 600;
     }
 
     .fields {
@@ -369,7 +385,7 @@
 
     input[type="text"]:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(47, 93, 124, 0.15);
+      box-shadow: 0 0 0 3px rgba(15, 107, 102, 0.18);
     }
 
     .summary-card {
@@ -1084,7 +1100,20 @@
         if (state.system === "dubai_rta") {
           $("parkingDetailsHint").textContent = "Shortcode 7275";
           container.innerHTML = `
-            <div class="field"><label for="zoneCode">RTA zone code</label><input id="zoneCode" type="text" maxlength="10" placeholder="335A" autocomplete="off"></div>
+            <div class="field">
+              <label for="zoneCode">RTA zone code <strong>(required)</strong></label>
+              <input
+                id="zoneCode"
+                type="text"
+                maxlength="10"
+                placeholder="Enter zone from parking sign"
+                autocomplete="off"
+                aria-describedby="zoneCodeHelp"
+              >
+              <span class="required-note" id="zoneCodeHelp">
+                <strong>Required:</strong> copy the zone exactly as shown on the parking sign.
+              </span>
+            </div>
             <div class="section-label" style="margin-top:9px;">Duration <span>Hours</span></div>
             ${choiceGrid("durationChoices", [["1","1"],["2","2"],["3","3"],["4","4"]], 4)}
             <div class="section-label" style="margin-top:9px;">Tariff type <span>Check the sign</span></div>
@@ -1255,7 +1284,12 @@
 
       $("useSavedPlate").addEventListener("click", () => {
         if (!parkingStepComplete()) {
-          setStatus("step1Status", "Complete the parking details first.");
+          setStatus(
+            "step1Status",
+            state.system === "dubai_rta" && !state.parking.zone
+              ? "Enter the RTA zone code shown on the parking sign."
+              : "Complete the parking details first."
+          );
           return;
         }
 
@@ -1272,7 +1306,12 @@
 
       $("enterPlateNumber").addEventListener("click", () => {
         if (!parkingStepComplete()) {
-          setStatus("step1Status", "Complete the parking details first.");
+          setStatus(
+            "step1Status",
+            state.system === "dubai_rta" && !state.parking.zone
+              ? "Enter the RTA zone code shown on the parking sign."
+              : "Complete the parking details first."
+          );
           return;
         }
 
