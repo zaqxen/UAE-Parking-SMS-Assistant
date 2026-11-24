@@ -636,6 +636,10 @@
       line-height: 1.45;
     }
 
+    .parking-guide a {
+      color: var(--text);
+    }
+
     .hidden {
       display: none !important;
     }
@@ -882,14 +886,18 @@
             <div class="sms-body">
               <div class="sms-row"><span>Shortcode</span><strong id="previewShortcode">—</strong></div>
               <div class="sms-row"><span>Message</span><strong class="sms-message" id="previewBody">—</strong></div>
-              <div class="sms-row"><span>Cost</span><strong id="previewCost">—</strong></div>
-              <div class="sms-row"><span>Paid hours</span><strong id="previewHours">—</strong></div>
+              <div class="sms-row" id="previewCostRow"><span>Cost</span><strong id="previewCost">—</strong></div>
+              <div class="sms-row" id="previewHoursRow"><span>Paid hours</span><strong id="previewHours">—</strong></div>
+              <p class="page-note parking-guide hidden" id="dubaiParkingGuide">
+                For rates and paid hours, check the posted sign or
+                <a href="https://cms.parkin.ae/en/general-parking-information" target="_blank" rel="noopener noreferrer">Parkin’s parking zone guide</a>.
+              </p>
             </div>
           </div>
 
           <div class="page-note">
             Fees and parking hours are informational and may change. Always verify the parking sign and confirmation SMS.<br>
-            <strong>Page last updated: 14 August 2026.</strong><br>
+            <strong>Page last updated: 24 November 2026.</strong><br>
             Parking rules last reviewed: 16 July 2026.
           </div>
 
@@ -1468,24 +1476,6 @@
         const isSunday = time.weekday === "Sunday";
         const isFriday = time.weekday === "Friday";
 
-        if (state.system === "dubai_rta") {
-          const isFree = isSunday || isWithinTime(time.totalMinutes, 22 * 60, 8 * 60);
-          const isPeak = isWithinTime(time.totalMinutes, 8 * 60, 10 * 60) || isWithinTime(time.totalMinutes, 16 * 60, 20 * 60);
-          let cost = "Off-peak cost varies by zone; check the tariff sign.";
-          if (isFree) cost = "AED 0 during the default free period";
-          else if (isPeak) {
-            const rate = state.parking.tariff === "premium" ? 6 : 4;
-            cost = `About AED ${rate * duration} (${rate}/hour peak rate)`;
-          }
-          return {
-            isFree,
-            title: "Dubai public parking appears free now",
-            reason: isSunday ? "The default schedule treats Sunday as free all day." : "The default schedule is free overnight from 10:00 PM to 8:00 AM.",
-            hours: "Mon–Sat, 8:00 AM–10:00 PM",
-            cost
-          };
-        }
-
         if (state.system === "parkonic") {
           return { isFree: false, title: "", reason: "", hours: "Varies by private Parkonic location", cost: "Varies by zone and displayed tariff" };
         }
@@ -1567,11 +1557,16 @@
         $("previewShortcode").textContent = result.shortcode;
         $("previewBody").textContent = result.body;
 
-        const schedule = parkingSchedule();
-        $("previewCost").textContent = schedule.cost;
-        $("previewHours").textContent = schedule.hours;
+        // A Dubai zone code alone does not reliably identify its tariff and hours.
+        const showDubaiGuide = state.system === "dubai_rta";
+        const schedule = showDubaiGuide ? null : parkingSchedule();
+        $("dubaiParkingGuide").classList.toggle("hidden", !showDubaiGuide);
+        $("previewCostRow").classList.toggle("hidden", showDubaiGuide);
+        $("previewHoursRow").classList.toggle("hidden", showDubaiGuide);
+        $("previewCost").textContent = schedule ? schedule.cost : "";
+        $("previewHours").textContent = schedule ? schedule.hours : "";
 
-        if (schedule.isFree) {
+        if (schedule && schedule.isFree) {
           $("freeParkingTitle").textContent = schedule.title;
           $("freeParkingText").textContent = schedule.reason;
           $("freeParkingNotice").classList.remove("hidden");
