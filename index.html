@@ -888,6 +888,9 @@
               <div class="sms-row"><span>Message</span><strong class="sms-message" id="previewBody">—</strong></div>
               <div class="sms-row" id="previewCostRow"><span>Cost</span><strong id="previewCost">—</strong></div>
               <div class="sms-row" id="previewHoursRow"><span>Paid hours</span><strong id="previewHours">—</strong></div>
+              <p class="page-note parking-guide hidden" id="sharjahParkingGuide">
+                <a href="https://shjmun.gov.ae/servicedirectory/details/683d3a96ff3e1753c064e79b" target="_blank" rel="noopener noreferrer">Sharjah City Municipality SMS fees</a>
+              </p>
               <p class="page-note parking-guide hidden" id="dubaiParkingGuide">
                 For rates and paid hours, check the posted sign or
                 <a href="https://cms.parkin.ae/en/general-parking-information" target="_blank" rel="noopener noreferrer">Parkin’s parking zone guide</a>.
@@ -1470,6 +1473,8 @@
           : totalMinutes >= startMinutes || totalMinutes < endMinutes;
       }
 
+      const sharjahCitySmsFees = { 1: "2.38", 2: "5.38", 3: "8.38", 5: "12.38" };
+
       function parkingSchedule() {
         const time = uaeTime();
         const duration = Number(state.parking.duration || 1);
@@ -1498,12 +1503,16 @@
           const regularFridayFree = state.parking.signType === "regular" && isFriday;
           const overnightFree = time.totalMinutes < 8 * 60;
           const isFree = regularFridayFree || overnightFree;
+          const cityFee = sharjahCitySmsFees[duration];
+          const paidCost = state.system === "sharjah_city"
+            ? (cityFee ? `AED ${cityFee} by SMS` : "Check Sharjah City Municipality SMS fees")
+            : `About AED ${(2.38 * duration).toFixed(2)} by SMS; confirm the current fee`;
           return {
             isFree,
             title: state.system === "khorfakkan" ? "Khorfakkan parking appears free now" : "Sharjah public parking appears free now",
             reason: regularFridayFree ? "The default regular-sign schedule treats Friday as free. Blue 7-day signs remain chargeable." : "The default paid schedule starts at 8:00 AM.",
             hours: state.parking.signType === "blue" ? "Every day, 8:00 AM–12:00 midnight" : "Sat–Thu, 8:00 AM–12:00 midnight",
-            cost: isFree ? "AED 0 during the default free period" : `About AED ${(2.38 * duration).toFixed(2)} by SMS; confirm the current fee`
+            cost: isFree ? "AED 0 during the default free period" : paidCost
           };
         }
 
@@ -1561,6 +1570,7 @@
         const showDubaiGuide = state.system === "dubai_rta";
         const schedule = showDubaiGuide ? null : parkingSchedule();
         $("dubaiParkingGuide").classList.toggle("hidden", !showDubaiGuide);
+        $("sharjahParkingGuide").classList.toggle("hidden", state.system !== "sharjah_city" || schedule.isFree);
         $("previewCostRow").classList.toggle("hidden", showDubaiGuide);
         $("previewHoursRow").classList.toggle("hidden", showDubaiGuide);
         $("previewCost").textContent = schedule ? schedule.cost : "";
